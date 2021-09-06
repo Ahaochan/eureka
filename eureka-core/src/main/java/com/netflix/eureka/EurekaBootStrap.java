@@ -110,6 +110,7 @@ public class EurekaBootStrap implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent event) {
         try {
+            // 1. 初始化环境变量
             initEurekaEnvironment();
             initEurekaServerContext();
 
@@ -127,6 +128,7 @@ public class EurekaBootStrap implements ServletContextListener {
     protected void initEurekaEnvironment() throws Exception {
         logger.info("Setting the eureka configuration..");
 
+        // 单例模式创建配置管理器
         String dataCenter = ConfigurationManager.getConfigInstance().getString(EUREKA_DATACENTER);
         if (dataCenter == null) {
             logger.info("Eureka data center value eureka.datacenter is not set, defaulting to default");
