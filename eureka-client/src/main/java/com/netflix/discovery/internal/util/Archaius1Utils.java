@@ -30,6 +30,8 @@ public final class Archaius1Utils {
 
         String eurekaPropsFile = EUREKA_PROPS_FILE.get();
         try {
+            // 从eureka-client.properties和eureka-client-test.properties获取配置信息
+            // com/netflix/eureka/DefaultEurekaServerConfig.java:113
             ConfigurationManager.loadCascadedPropertiesFromResources(eurekaPropsFile);
         } catch (IOException e) {
             logger.warn(
