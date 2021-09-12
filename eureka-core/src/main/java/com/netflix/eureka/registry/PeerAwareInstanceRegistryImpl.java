@@ -69,6 +69,8 @@ import javax.inject.Singleton;
  * <em>Registers,Renewals,Cancels,Expirations and Status Changes</em>
  * </p>
  *
+ * 这个Eureka Server启动的时候，会尝试从其他的eureka server上抓取注册表的信息，如果抓取失败了，就不会让其他服务实例来自己这里进行服务发现。
+ *
  * <p>
  * When the eureka server starts up it tries to fetch all the registry
  * information from the peer eureka nodes.If for some reason this operation
@@ -76,6 +78,8 @@ import javax.inject.Singleton;
  * a period specified in
  * {@link com.netflix.eureka.EurekaServerConfig#getWaitTimeInMsWhenSyncEmpty()}.
  * </p>
+ *
+ * 如果当前Eureka server获取心跳的比例低于一定比例的话，就开启自我保护，不允许服务下线。
  *
  * <p>
  * One important thing to note about <em>renewals</em>.If the renewal drops more
