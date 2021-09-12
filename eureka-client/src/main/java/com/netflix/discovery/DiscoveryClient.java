@@ -264,6 +264,7 @@ public class DiscoveryClient implements EurekaClient {
     }
 
     public DiscoveryClient(ApplicationInfoManager applicationInfoManager, final EurekaClientConfig config, AbstractDiscoveryClientOptionalArgs args) {
+        // 备用注册表
         this(applicationInfoManager, config, args, new Provider<BackupRegistry>() {
             private volatile BackupRegistry backupRegistryInstance;
 
@@ -419,7 +420,7 @@ public class DiscoveryClient implements EurekaClient {
 
         // 抓取注册表的逻辑
         if (clientConfig.shouldFetchRegistry() && !fetchRegistry(false)) {
-            // 抓取注册表失败, 就从backup抓取注册表
+            // 抓取注册表失败, 就从backupRegistryProvider抓取注册表
             fetchRegistryFromBackup();
         }
 
@@ -431,6 +432,7 @@ public class DiscoveryClient implements EurekaClient {
         initScheduledTasks();
 
         try {
+            // 注册状态变更的监听器
             Monitors.registerObject(this);
         } catch (Throwable e) {
             logger.warn("Cannot register timers", e);
