@@ -280,6 +280,7 @@ public class DiscoveryClient implements EurekaClient {
     }
 
     public DiscoveryClient(ApplicationInfoManager applicationInfoManager, final EurekaClientConfig config, AbstractDiscoveryClientOptionalArgs args, EndpointRandomizer randomizer) {
+        // 备用注册表
         this(applicationInfoManager, config, args, new Provider<BackupRegistry>() {
             private volatile BackupRegistry backupRegistryInstance;
 
@@ -451,7 +452,7 @@ public class DiscoveryClient implements EurekaClient {
                 if (!primaryFetchRegistryResult) {
                     logger.info("Initial registry fetch from primary servers failed");
                 }
-                // 抓取注册表失败, 就从backup抓取注册表
+                // 抓取注册表失败, 就从backupRegistryProvider抓取注册表
                 boolean backupFetchRegistryResult = true;
                 if (!primaryFetchRegistryResult && !fetchRegistryFromBackup()) {
                     backupFetchRegistryResult = false;
@@ -487,6 +488,7 @@ public class DiscoveryClient implements EurekaClient {
         initScheduledTasks();
 
         try {
+            // 注册状态变更的监听器
             Monitors.registerObject(this);
         } catch (Throwable e) {
             logger.warn("Cannot register timers", e);
