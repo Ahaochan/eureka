@@ -191,6 +191,8 @@ public class EurekaBootStrap implements ServletContextListener {
             awsBinder = new AwsBinderDelegate(eurekaServerConfig, eurekaClient.getEurekaClientConfig(), registry, applicationInfoManager);
             awsBinder.start();
         } else {
+            // 不是云服务, 必然走这个分支
+            // 初始化服务实例注册表, 感知集群中的服务实例信息变化
             registry = new PeerAwareInstanceRegistryImpl(
                     eurekaServerConfig,
                     eurekaClient.getEurekaClientConfig(),
@@ -219,6 +221,7 @@ public class EurekaBootStrap implements ServletContextListener {
 
         EurekaServerContextHolder.initialize(serverContext);
 
+        // 启动eureka集群, 注册表之间消息互换
         serverContext.initialize();
         logger.info("Initialized server context");
 
