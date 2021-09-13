@@ -91,6 +91,7 @@ public class ApplicationsResource {
             @PathParam("version") String version,
             @PathParam("appId") String appId) {
         CurrentRequestVersion.set(Version.toEnum(version));
+        // 接收注册请求的逻辑
         return new ApplicationResource(appId, serverConfig, registry);
     }
 

@@ -55,7 +55,7 @@ public class ApplicationResource {
 
     private final String appName;
     private final EurekaServerConfig serverConfig;
-    private final PeerAwareInstanceRegistry registry;
+    private final PeerAwareInstanceRegistry registry; // 注册表，包含所有的服务实例注册的表
     private final ResponseCache responseCache;
 
     ApplicationResource(String appName,
@@ -139,7 +139,7 @@ public class ApplicationResource {
      *            a header parameter containing information whether this is
      *            replicated from other nodes.
      */
-    @POST
+    @POST // 接收post注册请求的逻辑
     @Consumes({"application/json", "application/xml"})
     public Response addInstance(InstanceInfo info,
                                 @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) {
@@ -161,6 +161,7 @@ public class ApplicationResource {
             return Response.status(400).entity("Missing dataCenterInfo Name").build();
         }
 
+        // 跳过
         // handle cases where clients may be registering with bad DataCenterInfo with missing data
         DataCenterInfo dataCenterInfo = info.getDataCenterInfo();
         if (dataCenterInfo instanceof UniqueIdentifier) {
@@ -182,6 +183,7 @@ public class ApplicationResource {
             }
         }
 
+        // 往注册表插入实例信息InstanceInfo
         registry.register(info, "true".equals(isReplication));
         return Response.status(204).build();  // 204 to be backwards compatible
     }

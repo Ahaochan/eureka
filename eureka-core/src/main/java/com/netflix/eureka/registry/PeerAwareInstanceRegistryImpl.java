@@ -411,7 +411,9 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         if (info.getLeaseInfo() != null && info.getLeaseInfo().getDurationInSecs() > 0) {
             leaseDuration = info.getLeaseInfo().getDurationInSecs();
         }
+        // 1. 服务实例InstanceInfo注册到本机的注册表
         super.register(info, leaseDuration, isReplication);
+        // 2. 服务实例InstanceInfo注册到集群内所有节点的注册表
         replicateToPeers(Action.Register, info.getAppName(), info.getId(), info, null, isReplication);
     }
 
