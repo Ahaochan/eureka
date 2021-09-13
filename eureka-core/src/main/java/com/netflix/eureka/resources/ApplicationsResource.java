@@ -92,6 +92,7 @@ public class ApplicationsResource {
             @PathParam("appId") String appId) {
         CurrentRequestVersion.set(Version.toEnum(version));
         try {
+            // 接收注册请求的逻辑
             return new ApplicationResource(appId, serverConfig, registry);
         } finally {
             CurrentRequestVersion.remove();
