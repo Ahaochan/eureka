@@ -75,12 +75,15 @@ public final class EurekaHttpClients {
         return new EurekaHttpClientFactory() {
             @Override
             public EurekaHttpClient newClient() {
+                // 这里的SessionedEurekaHttpClient是包装类, 实际上使用的是RetryableEurekaHttpClient
                 return new SessionedEurekaHttpClient(
                         name,
+                        // 这里的RetryableEurekaHttpClient是包装类, 实际上使用的是RedirectingEurekaHttpClient
                         RetryableEurekaHttpClient.createFactory(
                                 name,
                                 transportConfig,
                                 clusterResolver,
+                                // 这里的RetryableEurekaHttpClient是包装类, 实际上使用的是形参里的transportClientFactory
                                 RedirectingEurekaHttpClient.createFactory(transportClientFactory),
                                 ServerStatusEvaluators.legacyEvaluator()),
                         transportConfig.getSessionedClientReconnectIntervalSeconds() * 1000

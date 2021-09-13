@@ -200,6 +200,7 @@ public class ApplicationInfoManager {
     public void refreshDataCenterInfoIfRequired() {
         String existingAddress = instanceInfo.getHostName();
 
+        // 重新获取主机名和ip地址
         String newAddress;
         if (config instanceof RefreshableInstanceConfig) {
             // Refresh data center info, and return up to date address
@@ -209,6 +210,7 @@ public class ApplicationInfoManager {
         }
         String newIp = config.getIpAddress();
 
+        // 如果发生了变化, 更新服务实例instanceInfo
         if (newAddress != null && !newAddress.equals(existingAddress)) {
             logger.warn("The address changed from : {} => {}", existingAddress, newAddress);
 
@@ -226,6 +228,7 @@ public class ApplicationInfoManager {
         if (leaseInfo == null) {
             return;
         }
+        // 重新获取续约配置, 如果发生了变化, 就更新实例信息instanceInfo
         int currentLeaseDuration = config.getLeaseExpirationDurationInSeconds();
         int currentLeaseRenewal = config.getLeaseRenewalIntervalInSeconds();
         if (leaseInfo.getDurationInSecs() != currentLeaseDuration || leaseInfo.getRenewalIntervalInSecs() != currentLeaseRenewal) {

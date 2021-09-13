@@ -175,6 +175,7 @@ public class EurekaJerseyClientImpl implements EurekaJerseyClient {
         public EurekaJerseyClient build() {
             MyDefaultApacheHttpClient4Config config = new MyDefaultApacheHttpClient4Config();
             try {
+                // 底层使用的是ApacheHttpClient4
                 return new EurekaJerseyClientImpl(connectionTimeout, readTimeout, connectionIdleTimeout, config);
             } catch (Throwable e) {
                 throw new RuntimeException("Cannot create Jersey client ", e);

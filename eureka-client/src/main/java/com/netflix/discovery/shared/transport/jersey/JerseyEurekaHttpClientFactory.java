@@ -96,6 +96,7 @@ public class JerseyEurekaHttpClientFactory implements TransportClientFactory {
 
     @Override
     public EurekaHttpClient newClient(EurekaEndpoint endpoint) {
+        // 终于找到你了
         return new JerseyApplicationClient(apacheClient, endpoint.getServiceUrl(), additionalHeaders);
     }
 
@@ -172,13 +173,15 @@ public class JerseyEurekaHttpClientFactory implements TransportClientFactory {
                 additionalHeaders.put(EurekaAccept.HTTP_X_EUREKA_ACCEPT, eurekaAccept.name());
             }
 
-            if (experimental) {
+            if (experimental) { // experimental为false
                 return buildExperimental(additionalHeaders);
             }
+            // 底层使用的是ApacheHttpClient4
             return buildLegacy(additionalHeaders, systemSSL);
         }
 
         private JerseyEurekaHttpClientFactory buildLegacy(Map<String, String> additionalHeaders, boolean systemSSL) {
+            // 底层使用的是ApacheHttpClient4
             EurekaJerseyClientBuilder clientBuilder = new EurekaJerseyClientBuilder()
                     .withClientName(clientName)
                     .withUserAgent("Java-EurekaClient")

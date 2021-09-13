@@ -33,7 +33,7 @@ public abstract class AbstractJerseyEurekaHttpClient implements EurekaHttpClient
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractJerseyEurekaHttpClient.class);
 
-    protected final Client jerseyClient;
+    protected final Client jerseyClient; // ApacheHttpClient4
     protected final String serviceUrl;
 
     protected AbstractJerseyEurekaHttpClient(Client jerseyClient, String serviceUrl) {
@@ -47,6 +47,8 @@ public abstract class AbstractJerseyEurekaHttpClient implements EurekaHttpClient
         String urlPath = "apps/" + info.getAppName();
         ClientResponse response = null;
         try {
+            // 通过ApacheHttpClient4往eureka server推送实例信息InstanceInfo
+            // 访问http://127.0.0.1:8080/v2/apps/ServiceA
             Builder resourceBuilder = jerseyClient.resource(serviceUrl).path(urlPath).getRequestBuilder();
             addExtraHeaders(resourceBuilder);
             response = resourceBuilder

@@ -401,6 +401,7 @@ public class DiscoveryClient implements EurekaClient {
                             .build()
             );  // use direct handoff
 
+            // 构造Eureka网络传输组件
             eurekaTransport = new EurekaTransport();
             scheduleServerEndpointTask(eurekaTransport, args);
 
@@ -428,7 +429,7 @@ public class DiscoveryClient implements EurekaClient {
         if (this.preRegistrationHandler != null) {
             this.preRegistrationHandler.beforeRegistration();
         }
-        // 初始化调度任务
+        // 初始化调度任务, 里面进行服务注册
         initScheduledTasks();
 
         try {
@@ -456,6 +457,7 @@ public class DiscoveryClient implements EurekaClient {
                 ? Collections.emptyList()
                 : args.additionalFilters;
 
+        // args为null
         EurekaJerseyClient providedJerseyClient = args == null
                 ? null
                 : args.eurekaJerseyClient;
@@ -464,16 +466,17 @@ public class DiscoveryClient implements EurekaClient {
         if (args != null && args.getTransportClientFactories() != null) {
             argsTransportClientFactories = args.getTransportClientFactories();
         }
-        
+
         // Ignore the raw types warnings since the client filter interface changed between jersey 1/2
         @SuppressWarnings("rawtypes")
         TransportClientFactories transportClientFactories = argsTransportClientFactories == null
-                ? new Jersey1TransportClientFactories()
+                ? new Jersey1TransportClientFactories() // argsTransportClientFactories为null
                 : argsTransportClientFactories;
 
+        // args为null, 所以providedJerseyClient也为null, 走的是Jersey1TransportClientFactories的newTransportClientFactory方法
         // If the transport factory was not supplied with args, assume they are using jersey 1 for passivity
         eurekaTransport.transportClientFactory = providedJerseyClient == null
-                ? transportClientFactories.newTransportClientFactory(clientConfig, additionalFilters, applicationInfoManager.getInfo())
+                ? transportClientFactories.newTransportClientFactory(clientConfig, additionalFilters, applicationInfoManager.getInfo()) // 创建的是JerseyEurekaHttpClientFactory
                 : transportClientFactories.newTransportClientFactory(additionalFilters, providedJerseyClient);
 
         ApplicationsResolver.ApplicationsSource applicationsSource = new ApplicationsResolver.ApplicationsSource() {
@@ -499,13 +502,15 @@ public class DiscoveryClient implements EurekaClient {
                 applicationsSource
         );
 
+        // 如果要注册到Eureka, 就初始化http客户端
         if (clientConfig.shouldRegisterWithEureka()) {
             EurekaHttpClientFactory newRegistrationClientFactory = null;
             EurekaHttpClient newRegistrationClient = null;
             try {
+                // 里面一堆包装类, 一顿操作猛如虎, 其实都是走eurekaTransport.transportClientFactory, 这是在上面创建的
                 newRegistrationClientFactory = EurekaHttpClients.registrationClientFactory(
                         eurekaTransport.bootstrapResolver,
-                        eurekaTransport.transportClientFactory,
+                        eurekaTransport.transportClientFactory, // 这里才是真正的创建客户端的工厂JerseyEurekaHttpClientFactory, 创建JerseyApplicationClient
                         transportConfig
                 );
                 newRegistrationClient = newRegistrationClientFactory.newClient();
@@ -817,6 +822,7 @@ public class DiscoveryClient implements EurekaClient {
         logger.info(PREFIX + appPathIdentifier + ": registering service...");
         EurekaHttpResponse<Void> httpResponse;
         try {
+            // 使用JerseyApplicationClient发送HTTP请求
             httpResponse = eurekaTransport.registrationClient.register(instanceInfo);
         } catch (Exception e) {
             logger.warn("{} - registration failed {}", PREFIX + appPathIdentifier, e.getMessage(), e);
@@ -1317,8 +1323,8 @@ public class DiscoveryClient implements EurekaClient {
                 applicationInfoManager.registerStatusChangeListener(statusChangeListener);
             }
 
-            // 启动线程
-            instanceInfoReplicator.start(clientConfig.getInitialInstanceInfoReplicationIntervalSeconds());
+            // 服务信息复制组件, 复制到eureka server, 里面进行服务注册...
+            instanceInfoReplicator.start(clientConfig.getInitialInstanceInfoReplicationIntervalSeconds()); // 默认40秒
         } else {
             logger.info("Not registering with Eureka server per configuration");
         }
@@ -1386,11 +1392,14 @@ public class DiscoveryClient implements EurekaClient {
      * isDirty flag on the instanceInfo is set to true
      */
     void refreshInstanceInfo() {
+        // 通过服务实例管理器, 监听hostname变化
         applicationInfoManager.refreshDataCenterInfoIfRequired();
+        //通过服务实例管理器, 监听续约信息变化
         applicationInfoManager.refreshLeaseInfoIfRequired();
 
         InstanceStatus status;
         try {
+            // 进行健康检查
             status = getHealthCheckHandler().getStatus(instanceInfo.getStatus());
         } catch (Exception e) {
             logger.warn("Exception from healthcheckHandler.getStatus, setting status to DOWN", e);
@@ -1398,6 +1407,7 @@ public class DiscoveryClient implements EurekaClient {
         }
 
         if (null != status) {
+            // 设置服务实例的健康状态
             applicationInfoManager.setInstanceStatus(status);
         }
     }
