@@ -114,6 +114,7 @@ public class ApplicationsResource {
      * @return a response containing information about all {@link com.netflix.discovery.shared.Applications}
      *         from the {@link AbstractInstanceRegistry}.
      */
+    // 全量拉取注册表的接口逻辑
     @GET
     public Response getContainers(@PathParam("version") String version,
                                   @HeaderParam(HEADER_ACCEPT) String acceptHeader,
@@ -121,11 +122,10 @@ public class ApplicationsResource {
                                   @HeaderParam(EurekaAccept.HTTP_X_EUREKA_ACCEPT) String eurekaAccept,
                                   @Context UriInfo uriInfo,
                                   @Nullable @QueryParam("regions") String regionsStr) {
-
         boolean isRemoteRegionRequested = null != regionsStr && !regionsStr.isEmpty();
         String[] regions = null;
         if (!isRemoteRegionRequested) {
-            EurekaMonitors.GET_ALL.increment();
+            EurekaMonitors.GET_ALL.increment(); // 统计请求次数
         } else {
             regions = regionsStr.toLowerCase().split(",");
             Arrays.sort(regions); // So we don't have different caches for same regions queried in different order.
@@ -146,6 +146,7 @@ public class ApplicationsResource {
             returnMediaType = MediaType.APPLICATION_XML;
         }
 
+        // 生成缓存Key, 用于在多级缓存ResponseCacheImpl中获取服务实例信息!!!!!!!!!!
         Key cacheKey = new Key(Key.EntityType.Application,
                 ResponseCacheImpl.ALL_APPS,
                 keyType, CurrentRequestVersion.get(), EurekaAccept.fromString(eurekaAccept), regions

@@ -147,6 +147,7 @@ public class ResponseCacheImpl implements ResponseCache {
                                     Key cloneWithNoRegions = key.cloneWithoutRegions();
                                     regionSpecificKeys.put(cloneWithNoRegions, key);
                                 }
+                                // 如果readWriteCacheMap还是没有, 就去注册表加载
                                 Value value = generatePayload(key);
                                 return value;
                             }
@@ -206,11 +207,12 @@ public class ResponseCacheImpl implements ResponseCache {
      * @return payload which contains information about the applications.
      */
     public String get(final Key key) {
-        return get(key, shouldUseReadOnlyResponseCache);
+        return get(key, shouldUseReadOnlyResponseCache); // 默认是true
     }
 
     @VisibleForTesting
     String get(final Key key, boolean useReadOnlyCache) {
+        // 核心是这个getValue
         Value payload = getValue(key, useReadOnlyCache);
         if (payload == null || payload.getPayload().equals(EMPTY_PAYLOAD)) {
             return null;
@@ -352,12 +354,14 @@ public class ResponseCacheImpl implements ResponseCache {
     Value getValue(final Key key, boolean useReadOnlyCache) {
         Value payload = null;
         try {
+            // 默认是true
             if (useReadOnlyCache) {
+                // 从readOnlyCacheMap获取缓存, 没有就从readWriteCacheMap获取, 然后塞到readOnlyCacheMap中
                 final Value currentPayload = readOnlyCacheMap.get(key);
                 if (currentPayload != null) {
                     payload = currentPayload;
                 } else {
-                    payload = readWriteCacheMap.get(key);
+                    payload = readWriteCacheMap.get(key); // 如果readWriteCacheMap没数据, 就去注册表加载, 这是guava的LoadingCache
                     readOnlyCacheMap.put(key, payload);
                 }
             } else {
@@ -421,6 +425,7 @@ public class ResponseCacheImpl implements ResponseCache {
                             payload = getPayLoad(key, registry.getApplicationsFromMultipleRegions(key.getRegions()));
                         } else {
                             tracer = serializeAllAppsTimer.start();
+                            // 从注册表获取所有的Application, 返回出去构造缓存
                             payload = getPayLoad(key, registry.getApplications());
                         }
                     } else if (ALL_APPS_DELTA.equals(key.getName())) {
