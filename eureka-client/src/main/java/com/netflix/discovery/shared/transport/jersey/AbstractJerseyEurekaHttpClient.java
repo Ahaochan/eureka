@@ -164,6 +164,7 @@ public abstract class AbstractJerseyEurekaHttpClient implements EurekaHttpClient
 
     @Override
     public EurekaHttpResponse<Applications> getApplications(String... regions) {
+        // 抓取全量注册表
         return getApplicationsInternal("apps/", regions);
     }
 
@@ -186,6 +187,7 @@ public abstract class AbstractJerseyEurekaHttpClient implements EurekaHttpClient
         ClientResponse response = null;
         String regionsParamValue = null;
         try {
+            // get请求 http://127.0.0.1:8080/v2/apps 获取全量注册表信息
             WebResource webResource = jerseyClient.resource(serviceUrl).path(urlPath);
             if (regions != null && regions.length > 0) {
                 regionsParamValue = StringUtil.join(regions);

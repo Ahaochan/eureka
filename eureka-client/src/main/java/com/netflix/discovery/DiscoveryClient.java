@@ -419,7 +419,7 @@ public class DiscoveryClient implements EurekaClient {
             throw new RuntimeException("Failed to initialize DiscoveryClient!", e);
         }
 
-        // 抓取注册表的逻辑
+        // 全量从eureka server抓取注册表
         if (clientConfig.shouldFetchRegistry() && !fetchRegistry(false)) {
             // 抓取注册表失败, 就从backupRegistryProvider抓取注册表
             fetchRegistryFromBackup();
@@ -939,15 +939,21 @@ public class DiscoveryClient implements EurekaClient {
         Stopwatch tracer = FETCH_REGISTRY_TIMER.start();
 
         try {
+            // Applications表示所有服务, Application表示某个服务, Application内有该服务的所有实例信息InstanceInfo
             // If the delta is disabled or if it is the first time, get all
             // applications
             Applications applications = getApplications();
 
+            // 如果禁用增量更新
             if (clientConfig.shouldDisableDelta()
+                    // 如果RegistryRefreshSingleVipAddress不为空
                     || (!Strings.isNullOrEmpty(clientConfig.getRegistryRefreshSingleVipAddress()))
+                    // 如果强制全量抓取注册表
                     || forceFullRegistryFetch
+                    // 如果applications为空
                     || (applications == null)
                     || (applications.getRegisteredApplications().size() == 0)
+                    // 如果applications的版本不支持增量抓取
                     || (applications.getVersion() == -1)) //Client application does not have latest library supporting delta
             {
                 logger.info("Disable delta property : {}", clientConfig.shouldDisableDelta());
@@ -957,6 +963,7 @@ public class DiscoveryClient implements EurekaClient {
                 logger.info("Registered Applications size is zero : {}",
                         (applications.getRegisteredApplications().size() == 0));
                 logger.info("Application version is -1: {}", (applications.getVersion() == -1));
+                // 第一次进来, 全量抓取注册表, 并存储到内存Map中
                 getAndStoreFullRegistry();
             } else {
                 getAndUpdateDelta(applications);
@@ -1043,6 +1050,7 @@ public class DiscoveryClient implements EurekaClient {
 
         Applications apps = null;
         EurekaHttpResponse<Applications> httpResponse = clientConfig.getRegistryRefreshSingleVipAddress() == null
+                // 默认走JerseyApplicationClient的getApplications方法
                 ? eurekaTransport.queryClient.getApplications(remoteRegionsRef.get())
                 : eurekaTransport.queryClient.getVip(clientConfig.getRegistryRefreshSingleVipAddress(), remoteRegionsRef.get());
         if (httpResponse.getStatusCode() == Status.OK.getStatusCode()) {
