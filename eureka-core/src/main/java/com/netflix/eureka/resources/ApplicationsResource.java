@@ -194,6 +194,7 @@ public class ApplicationsResource {
      * @return response containing the delta information of the
      *         {@link AbstractInstanceRegistry}.
      */
+    // 增量拉取注册表的接口逻辑
     @Path("delta")
     @GET
     public Response getContainerDifferential(
@@ -228,6 +229,7 @@ public class ApplicationsResource {
             returnMediaType = MediaType.APPLICATION_XML;
         }
 
+        // 和全量抓取逻辑一样，唯一不同的是, Key不一样, 然后readWriteCacheMap去注册表加载的逻辑也不一样
         Key cacheKey = new Key(Key.EntityType.Application,
                 ResponseCacheImpl.ALL_APPS_DELTA,
                 keyType, CurrentRequestVersion.get(), EurekaAccept.fromString(eurekaAccept), regions
