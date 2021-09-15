@@ -429,7 +429,7 @@ public class DiscoveryClient implements EurekaClient {
         if (this.preRegistrationHandler != null) {
             this.preRegistrationHandler.beforeRegistration();
         }
-        // 初始化调度任务, 里面进行服务注册
+        // 初始化调度任务, 里面做服务注册, 发送心跳, 增量抓取注册表
         initScheduledTasks();
 
         try {
@@ -966,6 +966,7 @@ public class DiscoveryClient implements EurekaClient {
                 // 第一次进来, 全量抓取注册表, 并存储到内存Map中
                 getAndStoreFullRegistry();
             } else {
+                // 定时30秒一次进行增量抓取注册表
                 getAndUpdateDelta(applications);
             }
             applications.setAppsHashCode(applications.getReconcileHashCode());
@@ -1085,6 +1086,7 @@ public class DiscoveryClient implements EurekaClient {
         long currentUpdateGeneration = fetchRegistryGeneration.get();
 
         Applications delta = null;
+        // 通过JerseyApplicationClient去调用get请求 http://127.0.0.1:8080/v2/apps/delta 获取增量注册表信息
         EurekaHttpResponse<Applications> httpResponse = eurekaTransport.queryClient.getDelta(remoteRegionsRef.get());
         if (httpResponse.getStatusCode() == Status.OK.getStatusCode()) {
             delta = httpResponse.getEntity();
@@ -1093,13 +1095,16 @@ public class DiscoveryClient implements EurekaClient {
         if (delta == null) {
             logger.warn("The server does not allow the delta revision to be applied because it is not safe. "
                     + "Hence got the full registry.");
+            // 如果没有增量数据，就全量抓取注册表
             getAndStoreFullRegistry();
         } else if (fetchRegistryGeneration.compareAndSet(currentUpdateGeneration, currentUpdateGeneration + 1)) {
             logger.debug("Got delta update with apps hashcode {}", delta.getAppsHashCode());
             String reconcileHashCode = "";
             if (fetchRegistryUpdateLock.tryLock()) {
                 try {
+                    // 增量更新注册表
                     updateDelta(delta);
+                    // 计算更新合并后的服务实例信息的hash值
                     reconcileHashCode = getReconcileHashCode(applications);
                 } finally {
                     fetchRegistryUpdateLock.unlock();
@@ -1108,7 +1113,9 @@ public class DiscoveryClient implements EurekaClient {
                 logger.warn("Cannot acquire update lock, aborting getAndUpdateDelta");
             }
             // There is a diff in number of instances for some reason
+            // 如果 更新合并后的服务实例信息的hash值 与 eureka server端的全量注册表的hash值不一样, 可能发生了某种错误
             if (!reconcileHashCode.equals(delta.getAppsHashCode()) || clientConfig.shouldLogDeltaDiff()) {
+                // 就去全量抓取一次注册表信息
                 reconcileAndLogDifference(delta, reconcileHashCode);  // this makes a remoteCall
             }
         } else {
@@ -1262,10 +1269,10 @@ public class DiscoveryClient implements EurekaClient {
      * Initializes all scheduled tasks.
      */
     private void initScheduledTasks() {
-        // 抓取注册表
+        // 增量抓取注册表
         if (clientConfig.shouldFetchRegistry()) {
             // registry cache refresh timer
-            int registryFetchIntervalSeconds = clientConfig.getRegistryFetchIntervalSeconds();
+            int registryFetchIntervalSeconds = clientConfig.getRegistryFetchIntervalSeconds(); // 默认30秒
             int expBackOffBound = clientConfig.getCacheRefreshExecutorExponentialBackOffBound();
             scheduler.schedule(
                     new TimedSupervisorTask(
@@ -1275,7 +1282,7 @@ public class DiscoveryClient implements EurekaClient {
                             registryFetchIntervalSeconds,
                             TimeUnit.SECONDS,
                             expBackOffBound,
-                            new CacheRefreshThread() // 抓取注册表
+                            new CacheRefreshThread() // 增量抓取注册表
                     ),
                     registryFetchIntervalSeconds, TimeUnit.SECONDS);
         }
@@ -1498,6 +1505,7 @@ public class DiscoveryClient implements EurekaClient {
                 }
             }
 
+            // 实际进行增量抓取注册表
             boolean success = fetchRegistry(remoteRegionsModified);
             if (success) {
                 registrySize = localRegionApps.get().size();

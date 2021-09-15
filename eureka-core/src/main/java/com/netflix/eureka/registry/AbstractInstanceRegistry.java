@@ -123,6 +123,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
 
         this.renewsLastMin = new MeasuredRate(1000 * 60 * 1);
 
+        // 180秒一次清理recentlyChangedQueue
         this.deltaRetentionTimer.schedule(getDeltaRetentionTask(),
                 serverConfig.getDeltaRetentionTimerIntervalInMs(),
                 serverConfig.getDeltaRetentionTimerIntervalInMs());
@@ -274,7 +275,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                 lease.serviceUp(); // 设置服务实例的启动时间
             }
             registrant.setActionType(ActionType.ADDED);
-            recentlyChangedQueue.add(new RecentlyChangedItem(lease));
+            recentlyChangedQueue.add(new RecentlyChangedItem(lease)); // 记录本次变更, 用于增量更新
             registrant.setLastUpdatedTimestamp();
             // 7. 主动刷新readWriteCacheMap的缓存
             invalidateCache(registrant.getAppName(), registrant.getVIPAddress(), registrant.getSecureVipAddress());
@@ -968,7 +969,9 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
         apps.setVersion(responseCache.getVersionDeltaWithRegions().get());
         Map<String, Application> applicationInstancesMap = new HashMap<String, Application>();
         try {
+            // 1. 加写锁, 不允许别的线程读写了
             write.lock();
+            // 2. 从最近180秒内发生变化的服务实例里, 取数构造Application, 存入Applications, 然后返回出去
             Iterator<RecentlyChangedItem> iter = this.recentlyChangedQueue.iterator();
             logger.debug("The number of elements in the delta queue is :" + this.recentlyChangedQueue.size());
             while (iter.hasNext()) {
@@ -1340,6 +1343,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
             public void run() {
                 Iterator<RecentlyChangedItem> it = recentlyChangedQueue.iterator();
                 while (it.hasNext()) {
+                    // 如果超过了180秒, 就移除服务实例变更记录
                     if (it.next().getLastUpdateTime() <
                             System.currentTimeMillis() - serverConfig.getRetentionTimeInMSInDeltaQueue()) {
                         it.remove();
