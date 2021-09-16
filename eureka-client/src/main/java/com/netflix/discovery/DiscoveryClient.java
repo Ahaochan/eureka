@@ -909,6 +909,7 @@ public class DiscoveryClient implements EurekaClient {
     boolean renew() {
         EurekaHttpResponse<InstanceInfo> httpResponse;
         try {
+            // 通过JerseyApplicationClient去发送put请求到http://127.0.0.1:8080/v2/apps/ServiceA/1
             httpResponse = eurekaTransport.registrationClient.sendHeartBeat(instanceInfo.getAppName(), instanceInfo.getId(), instanceInfo, null);
             logger.debug(PREFIX + "{} - Heartbeat status: {}", appPathIdentifier, httpResponse.getStatusCode());
             if (httpResponse.getStatusCode() == Status.NOT_FOUND.getStatusCode()) {
@@ -1497,6 +1498,7 @@ public class DiscoveryClient implements EurekaClient {
     private class HeartbeatThread implements Runnable {
 
         public void run() {
+            // 每隔30秒发送一次心跳
             if (renew()) {
                 lastSuccessfulHeartbeatTimestamp = System.currentTimeMillis();
             }

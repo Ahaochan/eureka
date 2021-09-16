@@ -125,6 +125,8 @@ public class ApplicationResource {
      *            the unique identifier of the instance.
      * @return information about a particular instance.
      */
+    // http://127.0.0.1:8080/v2/apps/ServiceA/i-000000-1
+    // 服务续约逻辑
     @Path("{id}")
     public InstanceResource getInstanceInfo(@PathParam("id") String id) {
         return new InstanceResource(this, id, serverConfig, registry);

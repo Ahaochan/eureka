@@ -392,6 +392,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                 }
             }
             renewsLastMin.increment();
+            // 服务续约的核心逻辑, 修改时间
             leaseToRenew.renew();
             return true;
         }
