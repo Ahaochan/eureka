@@ -387,7 +387,9 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     @Override
     public boolean cancel(final String appName, final String id,
                           final boolean isReplication) {
+        // 1. 取消注册
         if (super.cancel(appName, id, isReplication)) {
+            // 2. 同步到集群的其他peer
             replicateToPeers(Action.Cancel, appName, id, null, null, isReplication);
 
             return true;

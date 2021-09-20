@@ -948,18 +948,23 @@ public class DiscoveryClient implements EurekaClient {
      * Shuts down Eureka Client. Also sends a deregistration request to the
      * eureka server.
      */
+    // 关闭eureka client, 进行服务下线
     @PreDestroy
     @Override
     public synchronized void shutdown() {
+        // 加锁防止并发操作
         if (isShutdown.compareAndSet(false, true)) {
             logger.info("Shutting down DiscoveryClient ...");
 
+            // 1. 移除状态监听器
             if (statusChangeListener != null && applicationInfoManager != null) {
                 applicationInfoManager.unregisterStatusChangeListener(statusChangeListener.getId());
             }
 
+            // 2. 停止定时调度任务的线程池, 释放资源, 停止运行的线程
             cancelScheduledTasks();
 
+            // 3. 修改服务实例的状态为DOWN, 取消注册, 发送delete请求到http://127.0.0.1:8080/v2/apps/ServiceA/i-000000-1
             // If APPINFO was registered
             if (applicationInfoManager != null
                     && clientConfig.shouldRegisterWithEureka()
@@ -968,10 +973,12 @@ public class DiscoveryClient implements EurekaClient {
                 unregister();
             }
 
+            // 4. 关闭网络通信组件
             if (eurekaTransport != null) {
                 eurekaTransport.shutdown();
             }
 
+            // 5. 将监听器Monitor关闭
             heartbeatStalenessMonitor.shutdown();
             registryStalenessMonitor.shutdown();
 
@@ -989,6 +996,7 @@ public class DiscoveryClient implements EurekaClient {
         if(eurekaTransport != null && eurekaTransport.registrationClient != null) {
             try {
                 logger.info("Unregistering ...");
+                // 取消注册, 发送delete请求到http://127.0.0.1:8080/v2/apps/ServiceA/i-000000-1
                 EurekaHttpResponse<Void> httpResponse = eurekaTransport.registrationClient.cancel(instanceInfo.getAppName(), instanceInfo.getId());
                 logger.info(PREFIX + "{} - deregister  status: {}", appPathIdentifier, httpResponse.getStatusCode());
             } catch (Exception e) {
