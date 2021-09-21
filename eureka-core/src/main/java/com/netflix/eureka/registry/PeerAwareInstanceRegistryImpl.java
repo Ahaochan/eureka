@@ -213,20 +213,25 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         // Copy entire entry from neighboring DS node
         int count = 0;
 
+        // 重试5次, 当获取到eureka集群其他节点的实例信息后, 就不满足循环条件, 跳出循环
         for (int i = 0; ((i < serverConfig.getRegistrySyncRetries()) && (count == 0)); i++) {
             if (i > 0) {
                 try {
-                    Thread.sleep(serverConfig.getRegistrySyncRetryWaitMs());
+                    Thread.sleep(serverConfig.getRegistrySyncRetryWaitMs()); // 每次重试休眠30秒
                 } catch (InterruptedException e) {
                     logger.warn("Interrupted during registry transfer..");
                     break;
                 }
             }
+            // 从eureka集群其他节点的实例信息
+            // 这里是走DiscoveryClient, 在初始化DiscoveryClient的时候就已经拉取到注册表信息了, 所以这里直接获取本地注册表
+            // 这里的重试机制是因为DiscoveryClient可能还在拉取中, 等待一段时间, 看看拉取成功没有
             Applications apps = eurekaClient.getApplications();
             for (Application app : apps.getRegisteredApplications()) {
                 for (InstanceInfo instance : app.getInstances()) {
                     try {
                         if (isRegisterable(instance)) {
+                            // 添加到自己的注册表里
                             register(instance, instance.getLeaseInfo().getDurationInSecs(), true);
                             count++;
                         }
@@ -645,12 +650,14 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     private void replicateToPeers(Action action, String appName, String id,
                                   InstanceInfo info /* optional */,
                                   InstanceStatus newStatus /* optional */, boolean isReplication) {
+        // 实例注册、下线、故障等任何操作, 都会复制发给其他所有节点
         Stopwatch tracer = action.getTimer().start();
         try {
             if (isReplication) {
                 numberOfReplicationsLastMin.increment();
             }
             // If it is a replication already, do not replicate again as this will create a poison replication
+            // 如果发现这个请求已经是复制请求了, 就不再复制给其他节点, 直接return
             if (peerEurekaNodes == Collections.EMPTY_LIST || isReplication) {
                 return;
             }
