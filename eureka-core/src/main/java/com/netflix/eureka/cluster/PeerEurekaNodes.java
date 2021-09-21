@@ -73,6 +73,7 @@ public class PeerEurekaNodes {
     }
 
     public void start() {
+        // 启动单个线程处理
         taskExecutor = Executors.newSingleThreadScheduledExecutor(
                 new ThreadFactory() {
                     @Override
@@ -84,6 +85,7 @@ public class PeerEurekaNodes {
                 }
         );
         try {
+            // 更新1次
             updatePeerEurekaNodes(resolvePeerUrls());
             Runnable peersUpdateTask = new Runnable() {
                 @Override
@@ -96,7 +98,7 @@ public class PeerEurekaNodes {
 
                 }
             };
-            // 定时刷新eureka集群的信息
+            // 每隔10分钟定时刷新eureka集群的信息
             taskExecutor.scheduleWithFixedDelay(
                     peersUpdateTask,
                     serverConfig.getPeerEurekaNodesUpdateIntervalMs(),
@@ -187,6 +189,7 @@ public class PeerEurekaNodes {
         if (!toAdd.isEmpty()) {
             logger.info("Adding new peer nodes {}", toAdd);
             for (String peerUrl : toAdd) {
+                // 将新增的节点 PeerEurekaNode 加入 peerEurekaNodes 管理
                 newNodeList.add(createPeerEurekaNode(peerUrl));
             }
         }

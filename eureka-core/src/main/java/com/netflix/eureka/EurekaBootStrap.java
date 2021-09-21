@@ -174,6 +174,7 @@ public class EurekaBootStrap implements ServletContextListener {
             // 初始化Eureka Client，用来和其他Peer节点通信, 里面去加载eureka-client.properties, eureka-client-test.properties
             // 和EurekaInstanceConfig关注的配置不一样
             EurekaClientConfig eurekaClientConfig = new DefaultEurekaClientConfig();
+            // 构造eureka client, 并且全量拉取注册表信息
             eurekaClient = new DiscoveryClient(applicationInfoManager, eurekaClientConfig);
         } else {
             applicationInfoManager = eurekaClient.getApplicationInfoManager();
@@ -201,7 +202,7 @@ public class EurekaBootStrap implements ServletContextListener {
             );
         }
 
-        // 4. 处理peer节点相关逻辑
+        // 4. 初始化eureka集群, 在serverContext.initialize()中启动peer节点相关逻辑的处理
         PeerEurekaNodes peerEurekaNodes = getPeerEurekaNodes(
                 registry,
                 eurekaServerConfig,
