@@ -224,11 +224,13 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                 }
             } else {
                 // The lease does not exist and hence it is a new registration
+                // 如果这个实例id的租约信息不存在, 就更新下 一分钟期望有多少个服务实例的心跳发送过来
                 synchronized (lock) {
                     if (this.expectedNumberOfRenewsPerMin > 0) {
                         // Since the client wants to cancel it, reduce the threshold
                         // (1
                         // for 30 seconds, 2 for a minute)
+                        // 这里又是hard code, 如果配置每10秒一次心跳, 那又是bug, 应该是加上 60 / 每n秒发送一次心跳
                         this.expectedNumberOfRenewsPerMin = this.expectedNumberOfRenewsPerMin + 2;
                         this.numberOfRenewsPerMinThreshold =
                                 (int) (this.expectedNumberOfRenewsPerMin * serverConfig.getRenewalPercentThreshold());
@@ -397,7 +399,7 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                     instanceInfo.setStatusWithoutDirty(overriddenInstanceStatus);
                 }
             }
-            renewsLastMin.increment();
+            renewsLastMin.increment(); // 统计一分钟所有服务实例共发送了多少次心跳, 用于判断是否开启自我保护机制
             // 服务续约的核心逻辑, 修改时间
             leaseToRenew.renew();
             return true;
