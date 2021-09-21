@@ -180,10 +180,12 @@ class TaskExecutors<ID, T> {
         public void run() {
             try {
                 while (!isShutdown.get()) {
+                    // 持有acceptorExecutor的引用, 从acceptorExecutor的batchWorkQueue队列里取出打包后的请求批次
                     List<TaskHolder<ID, T>> holders = getWork();
                     metrics.registerExpiryTimes(holders);
 
                     List<T> tasks = getTasksOf(holders);
+                    // 对请求批次进行批处理
                     ProcessingResult result = processor.process(tasks);
                     switch (result) {
                         case Success:
@@ -206,9 +208,11 @@ class TaskExecutors<ID, T> {
         }
 
         private List<TaskHolder<ID, T>> getWork() throws InterruptedException {
+            // 这里就是acceptorExecutor的batchWorkQueue队列
             BlockingQueue<List<TaskHolder<ID, T>>> workQueue = taskDispatcher.requestWorkItems();
             List<TaskHolder<ID, T>> result;
             do {
+                // batchWorkQueue队列里取出打包后的请求批次
                 result = workQueue.poll(1, TimeUnit.SECONDS);
             } while (!isShutdown.get() && result == null);
             return result;

@@ -109,6 +109,7 @@ public class JerseyReplicationClient extends AbstractJerseyEurekaHttpClient impl
     public EurekaHttpResponse<ReplicationListResponse> submitBatchUpdates(ReplicationList replicationList) {
         ClientResponse response = null;
         try {
+            // 发送post请求给http://127.0.0.1:8080/v2/peerreplication/batch
             response = jerseyApacheClient.resource(serviceUrl)
                     .path(PeerEurekaNode.BATCH_URL_PATH)
                     .accept(MediaType.APPLICATION_JSON_TYPE)

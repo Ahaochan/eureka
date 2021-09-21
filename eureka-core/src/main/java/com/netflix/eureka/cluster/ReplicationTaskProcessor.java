@@ -68,6 +68,7 @@ class ReplicationTaskProcessor implements TaskProcessor<ReplicationTask> {
     public ProcessingResult process(List<ReplicationTask> tasks) {
         ReplicationList list = createReplicationListOf(tasks);
         try {
+            // 批量发送请求, 发送post请求给http://127.0.0.1:8080/v2/peerreplication/batch
             EurekaHttpResponse<ReplicationListResponse> response = replicationClient.submitBatchUpdates(list);
             int statusCode = response.getStatusCode();
             if (!isSuccess(statusCode)) {

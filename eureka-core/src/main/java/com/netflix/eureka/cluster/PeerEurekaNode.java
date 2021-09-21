@@ -133,6 +133,7 @@ public class PeerEurekaNode {
      */
     public void register(final InstanceInfo info) throws Exception {
         long expiryTime = System.currentTimeMillis() + getLeaseRenewalOf(info);
+        // 将任务交给acceptorExecutor去处理, 塞进acceptorQueue队列里
         batchingDispatcher.process(
                 taskId("register", info),
                 new InstanceReplicationTask(targetHost, Action.Register, info, null, true) {
@@ -156,6 +157,7 @@ public class PeerEurekaNode {
      */
     public void cancel(final String appName, final String id) throws Exception {
         long expiryTime = System.currentTimeMillis() + maxProcessingDelayMs;
+        // 将任务交给acceptorExecutor去处理, 塞进acceptorQueue队列里
         batchingDispatcher.process(
                 taskId("cancel", appName, id),
                 new InstanceReplicationTask(targetHost, Action.Cancel, appName, id) {
@@ -224,6 +226,7 @@ public class PeerEurekaNode {
             }
         };
         long expiryTime = System.currentTimeMillis() + getLeaseRenewalOf(info);
+        // 将任务交给acceptorExecutor去处理, 塞进acceptorQueue队列里
         batchingDispatcher.process(taskId("heartbeat", info), replicationTask, expiryTime);
     }
 
@@ -269,6 +272,7 @@ public class PeerEurekaNode {
     public void statusUpdate(final String appName, final String id,
                              final InstanceStatus newStatus, final InstanceInfo info) {
         long expiryTime = System.currentTimeMillis() + maxProcessingDelayMs;
+        // 将任务交给acceptorExecutor去处理, 塞进acceptorQueue队列里
         batchingDispatcher.process(
                 taskId("statusUpdate", appName, id),
                 new InstanceReplicationTask(targetHost, Action.StatusUpdate, info, null, false) {
@@ -293,6 +297,7 @@ public class PeerEurekaNode {
      */
     public void deleteStatusOverride(final String appName, final String id, final InstanceInfo info) {
         long expiryTime = System.currentTimeMillis() + maxProcessingDelayMs;
+        // 将任务交给acceptorExecutor去处理, 塞进acceptorQueue队列里
         batchingDispatcher.process(
                 taskId("deleteStatusOverride", appName, id),
                 new InstanceReplicationTask(targetHost, Action.DeleteStatusOverride, info, null, false) {

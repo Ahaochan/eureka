@@ -78,6 +78,7 @@ public class PeerReplicationResource {
     @Path("batch")
     @POST
     public Response batchReplication(ReplicationList replicationList) {
+        // 处理http://127.0.0.1:8080/v2/peerreplication/batch的批处理请求
         try {
             ReplicationListResponse batchResponse = new ReplicationListResponse();
             for (ReplicationInstance instanceInfo : replicationList.getReplicationList()) {
