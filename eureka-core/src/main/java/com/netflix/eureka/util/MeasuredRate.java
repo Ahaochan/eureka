@@ -41,6 +41,7 @@ public class MeasuredRate {
      * @param sampleInterval in milliseconds
      */
     public MeasuredRate(long sampleInterval) {
+        // 2. 默认每分钟
         this.sampleInterval = sampleInterval;
         this.timer = new Timer("Eureka-MeasureRateTimer", true);
         this.isActive = false;
@@ -48,12 +49,14 @@ public class MeasuredRate {
 
     public synchronized void start() {
         if (!isActive) {
+            // 3. 默认每分钟执行一次
             timer.schedule(new TimerTask() {
 
                 @Override
                 public void run() {
                     try {
                         // Zero out the current bucket.
+                        // 4. 将currentBucket的值设置到lastBucket, 然后将currentBucket置为0, 重新开始计算心跳次数
                         lastBucket.set(currentBucket.getAndSet(0));
                     } catch (Throwable e) {
                         logger.error("Cannot reset the Measured Rate", e);
@@ -76,6 +79,7 @@ public class MeasuredRate {
      * Returns the count in the last sample interval.
      */
     public long getCount() {
+        // 5. 将每分钟收到的心跳次数返回出去, 用于判断是否开启自我保护机制
         return lastBucket.get();
     }
 
@@ -83,6 +87,7 @@ public class MeasuredRate {
      * Increments the count in the current sample interval.
      */
     public void increment() {
+        // 1. 来一次心跳, currentBucket就加一
         currentBucket.incrementAndGet();
     }
 }
