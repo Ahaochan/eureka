@@ -73,9 +73,10 @@ public class EndpointUtils {
      */
     public static List<String> getDiscoveryServiceUrls(EurekaClientConfig clientConfig, String zone, ServiceUrlRandomizer randomizer) {
         boolean shouldUseDns = clientConfig.shouldUseDnsForFetchingServiceUrls();
-        if (shouldUseDns) {
+        if (shouldUseDns) { // 默认false
             return getServiceUrlsFromDNS(clientConfig, zone, clientConfig.shouldPreferSameZoneEureka(), randomizer);
         }
+        // clientConfig.shouldPreferSameZoneEureka()默认true
         return getServiceUrlsFromConfig(clientConfig, zone, clientConfig.shouldPreferSameZoneEureka());
     }
 
