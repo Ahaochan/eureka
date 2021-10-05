@@ -229,7 +229,8 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                 synchronized (lock) {
                     if (this.expectedNumberOfClientsSendingRenews > 0) {
                         // Since the client wants to register it, increase the number of clients sending renews
-                        // TODO 这里又是hard code, 如果配置每10秒一次心跳, 那又是bug, 应该是加上 60 / 每n秒发送一次心跳
+                        // 这里又是hard code, 如果配置每10秒一次心跳, 那又是bug, 应该是加上 60 / 每n秒发送一次心跳
+                        // master已修复hard code
                         this.expectedNumberOfClientsSendingRenews = this.expectedNumberOfClientsSendingRenews + 1;
                         updateRenewsPerMinThreshold();
                     }
@@ -271,7 +272,8 @@ public abstract class AbstractInstanceRegistry implements InstanceRegistry {
                 lease.serviceUp(); // 设置服务实例的启动时间
             }
             registrant.setActionType(ActionType.ADDED);
-            recentlyChangedQueue.add(new RecentlyChangedItem(lease)); // 记录本次变更, 用于增量更新
+            // 记录本次变更, 用于增量更新
+            recentlyChangedQueue.add(new RecentlyChangedItem(lease));
             registrant.setLastUpdatedTimestamp();
             // 7. 主动刷新readWriteCacheMap的缓存
             invalidateCache(registrant.getAppName(), registrant.getVIPAddress(), registrant.getSecureVipAddress());

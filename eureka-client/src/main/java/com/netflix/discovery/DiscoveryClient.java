@@ -337,11 +337,13 @@ public class DiscoveryClient implements EurekaClient {
         }
         
         this.applicationInfoManager = applicationInfoManager;
-        InstanceInfo myInfo = applicationInfoManager.getInfo(); // 之前根据eureka-client.properties, eureka-client-test.properties初始化的实例信息
+        // 之前根据eureka-client.properties, eureka-client-test.properties初始化的实例信息
+        InstanceInfo myInfo = applicationInfoManager.getInfo();
 
         clientConfig = config;
         staticClientConfig = clientConfig;
-        transportConfig = config.getTransportConfig(); // 网络传输配置
+        // 网络传输配置
+        transportConfig = config.getTransportConfig();
         instanceInfo = myInfo;
         if (myInfo != null) {
             // 实例名称 + 实例id
@@ -360,14 +362,16 @@ public class DiscoveryClient implements EurekaClient {
         remoteRegionsToFetch = new AtomicReference<String>(clientConfig.fetchRegistryForRemoteRegions());
         remoteRegionsRef = new AtomicReference<>(remoteRegionsToFetch.get() == null ? null : remoteRegionsToFetch.get().split(","));
 
-        if (config.shouldFetchRegistry()) { // 默认true
+        // 默认true
+        if (config.shouldFetchRegistry()) {
             // 从Eureka Server抓取注册表配置的策略
             this.registryStalenessMonitor = new ThresholdLevelsMetric(this, METRIC_REGISTRY_PREFIX + "lastUpdateSec_", new long[]{15L, 30L, 60L, 120L, 240L, 480L});
         } else {
             this.registryStalenessMonitor = ThresholdLevelsMetric.NO_OP_METRIC;
         }
 
-        if (config.shouldRegisterWithEureka()) { // 默认true
+        // 默认true
+        if (config.shouldRegisterWithEureka()) {
             // 将自己注册到Eureka Server的策略
             this.heartbeatStalenessMonitor = new ThresholdLevelsMetric(this, METRIC_REGISTRATION_PREFIX + "lastHeartbeatSec_", new long[]{15L, 30L, 60L, 120L, 240L, 480L});
         } else {
@@ -446,9 +450,10 @@ public class DiscoveryClient implements EurekaClient {
             throw new RuntimeException("Failed to initialize DiscoveryClient!", e);
         }
 
-        // 全量从eureka server抓取注册表
+
         if (clientConfig.shouldFetchRegistry()) {
             try {
+                // 全量从eureka server抓取注册表
                 boolean primaryFetchRegistryResult = fetchRegistry(false);
                 if (!primaryFetchRegistryResult) {
                     logger.info("Initial registry fetch from primary servers failed");
@@ -475,6 +480,7 @@ public class DiscoveryClient implements EurekaClient {
 
         if (clientConfig.shouldRegisterWithEureka() && clientConfig.shouldEnforceRegistrationAtInit()) {
             try {
+                // master已修复, 这里在初始化的时候就马上注册了
                 if (!register() ) {
                     throw new IllegalStateException("Registration error at startup. Invalid server response.");
                 }
@@ -576,7 +582,8 @@ public class DiscoveryClient implements EurekaClient {
                 // 里面一堆包装类, 一顿操作猛如虎, 其实都是走eurekaTransport.transportClientFactory, 这是在上面创建的
                 newRegistrationClientFactory = EurekaHttpClients.registrationClientFactory(
                         eurekaTransport.bootstrapResolver,
-                        eurekaTransport.transportClientFactory, // 这里才是真正的创建客户端的工厂JerseyEurekaHttpClientFactory, 创建JerseyApplicationClient
+                        // 这里才是真正的创建客户端的工厂JerseyEurekaHttpClientFactory, 创建JerseyApplicationClient
+                        eurekaTransport.transportClientFactory,
                         transportConfig
                 );
                 newRegistrationClient = newRegistrationClientFactory.newClient();
@@ -1343,8 +1350,10 @@ public class DiscoveryClient implements EurekaClient {
         // 增量抓取注册表
         if (clientConfig.shouldFetchRegistry()) {
             // registry cache refresh timer
-            int registryFetchIntervalSeconds = clientConfig.getRegistryFetchIntervalSeconds(); // 默认30秒
+            // 默认30秒
+            int registryFetchIntervalSeconds = clientConfig.getRegistryFetchIntervalSeconds();
             int expBackOffBound = clientConfig.getCacheRefreshExecutorExponentialBackOffBound();
+            // 增量抓取注册表的任务
             cacheRefreshTask = new TimedSupervisorTask(
                     "cacheRefresh",
                     scheduler,
@@ -1352,7 +1361,7 @@ public class DiscoveryClient implements EurekaClient {
                     registryFetchIntervalSeconds,
                     TimeUnit.SECONDS,
                     expBackOffBound,
-                    new CacheRefreshThread() // 增量抓取注册表
+                    new CacheRefreshThread()
             );
             scheduler.schedule(
                     cacheRefreshTask,
@@ -1495,7 +1504,7 @@ public class DiscoveryClient implements EurekaClient {
         }
 
         if (null != status) {
-            // 设置服务实例的健康状态
+            // 设置服务实例的健康状态, 触发状态监听器
             applicationInfoManager.setInstanceStatus(status);
         }
     }

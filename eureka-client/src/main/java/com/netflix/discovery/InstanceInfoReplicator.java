@@ -118,6 +118,7 @@ class InstanceInfoReplicator implements Runnable {
             // 刷新服务实例的信息
             discoveryClient.refreshInstanceInfo();
 
+            // master已修复, DiscoveryClient在构造函数中就注册了, 但是这里又注册了一遍, 没有影响
             Long dirtyTimestamp = instanceInfo.isDirtyWithTime();
             if (dirtyTimestamp != null) {
                 // 进行服务注册

@@ -220,7 +220,8 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         for (int i = 0; ((i < serverConfig.getRegistrySyncRetries()) && (count == 0)); i++) {
             if (i > 0) {
                 try {
-                    Thread.sleep(serverConfig.getRegistrySyncRetryWaitMs()); // 每次重试休眠30秒
+                    // 每次重试休眠30秒
+                    Thread.sleep(serverConfig.getRegistrySyncRetryWaitMs());
                 } catch (InterruptedException e) {
                     logger.warn("Interrupted during registry transfer..");
                     break;
@@ -250,9 +251,10 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     @Override
     public void openForTraffic(ApplicationInfoManager applicationInfoManager, int count) {
         // Renewals happen every 30 seconds and for a minute it should be a factor of 2.
-        // TODO 直接hard code, 垃圾代码, 如果每10秒心跳一次就出bug了, 这里应该是count * 60 / 每n秒发送一次心跳
         this.expectedNumberOfClientsSendingRenews = count;
-        // TODO 初始化一分钟期望有多少次心跳进来, 用于判断是否开启自我保护机制, 默认值是 相邻节点注册表的实例数量 * 2 * 0.85
+        // 直接hard code, 垃圾代码, 如果每10秒心跳一次就出bug了, 这里应该是count * 60 / 每n秒发送一次心跳
+        // master已修复hard code
+        // 初始化一分钟期望有多少次心跳进来, 用于判断是否开启自我保护机制, 默认值是 相邻节点注册表的实例数量 * 60 / 每n秒发送一次心跳 * 0.85
         updateRenewsPerMinThreshold();
         logger.info("Got {} instances from neighboring DS node", count);
         logger.info("Renew threshold is: {}", numberOfRenewsPerMinThreshold);
@@ -556,7 +558,6 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     private void updateRenewalThreshold() {
         try {
             // 每隔15分钟去更新 预期每分钟会接收到多少次心跳, 用于判断是否开启自我保护
-
             // 从其他eureka server拉取全量注册表, 合并到自己的本地
             Applications apps = eurekaClient.getApplications();
             int count = 0;
@@ -575,8 +576,9 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
                 // 这个if触发概率很小, 主要还是依靠服务注册、下线、故障, 去维护下面两个值
                 if ((count) > (serverConfig.getRenewalPercentThreshold() * expectedNumberOfClientsSendingRenews)
                         || (!this.isSelfPreservationModeEnabled())) {
-                    // TODO 这里又是hard code, 如果配置每10秒一次心跳, 那又是bug, 应该是 count * 60 / 每n秒发送一次心跳
                     this.expectedNumberOfClientsSendingRenews = count;
+                    // 这里又是hard code, 如果配置每10秒一次心跳, 那又是bug, 应该是 count * 60 / 每n秒发送一次心跳
+                    // master已修复hard code
                     updateRenewsPerMinThreshold();
                 }
             }

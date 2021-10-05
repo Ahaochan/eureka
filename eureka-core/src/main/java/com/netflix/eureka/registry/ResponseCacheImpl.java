@@ -362,7 +362,8 @@ public class ResponseCacheImpl implements ResponseCache {
                 if (currentPayload != null) {
                     payload = currentPayload;
                 } else {
-                    payload = readWriteCacheMap.get(key); // 如果readWriteCacheMap没数据, 就去注册表加载, 这是guava的LoadingCache
+                    // 如果readWriteCacheMap没数据, 就去注册表加载, 这是guava的LoadingCache
+                    payload = readWriteCacheMap.get(key);
                     readOnlyCacheMap.put(key, payload);
                 }
             } else {

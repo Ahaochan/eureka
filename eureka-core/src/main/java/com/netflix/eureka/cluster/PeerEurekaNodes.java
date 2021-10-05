@@ -162,9 +162,11 @@ public class PeerEurekaNodes {
         // 1. 初始化要删除的节点, 要添加的节点
         // peerEurekaNodeUrls是上次获取到的其他eureka server地址
         Set<String> toShutdown = new HashSet<>(peerEurekaNodeUrls);
-        toShutdown.removeAll(newPeerUrls); // 初始化要移除的eureka server地址
+        // 初始化要移除的eureka server地址
+        toShutdown.removeAll(newPeerUrls);
         Set<String> toAdd = new HashSet<>(newPeerUrls);
-        toAdd.removeAll(peerEurekaNodeUrls); // 初始化要添加的eureka server地址
+        // 初始化要添加的eureka server地址
+        toAdd.removeAll(peerEurekaNodeUrls);
 
         if (toShutdown.isEmpty() && toAdd.isEmpty()) { // No change
             return;
@@ -180,8 +182,10 @@ public class PeerEurekaNodes {
             while (i < newNodeList.size()) {
                 PeerEurekaNode eurekaNode = newNodeList.get(i);
                 if (toShutdown.contains(eurekaNode.getServiceUrl())) {
-                    newNodeList.remove(i); // ???边遍历边删除
-                    eurekaNode.shutDown(); // 关闭eureka节点
+                    // ???边遍历边删除
+                    newNodeList.remove(i);
+                    // 关闭eureka节点
+                    eurekaNode.shutDown();
                 } else {
                     i++;
                 }
